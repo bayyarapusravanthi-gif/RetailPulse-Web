@@ -42,19 +42,25 @@ st.markdown("""
 # =====================================================
 # 3. LOAD EXCEL DATA
 # =====================================================
+
 @st.cache_data
 def load_data():
-    file_name = "cleaned_online_retail.xlsx"
+    sheet_id = "1Q2Zp5OBla3qRJ31gkSPqMUyog4DMBgto"
+
+    url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=xlsx"
 
     sheet_1 = pd.read_excel(
-        file_name,
+        url,
         sheet_name="2009-10"
     )
 
     sheet_2 = pd.read_excel(
-        file_name,
+        url,
         sheet_name="2010-11"
     )
+
+    return sheet_1, sheet_2
+
 
     # Combine both sheets
     data = pd.concat(
