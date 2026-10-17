@@ -61,6 +61,15 @@ def load_data():
 
     return sheet_1, sheet_2
 
+    
+df1, df2 = load_data()
+
+df1["Revenue"] = df1["Quantity"] * df1["Price"]
+df2["Revenue"] = df2["Quantity"] * df2["Price"]
+
+sales = pd.concat([df1, df2], ignore_index=True)
+
+
 
     # Combine both sheets
     data = pd.concat(
