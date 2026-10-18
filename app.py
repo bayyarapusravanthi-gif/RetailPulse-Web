@@ -614,15 +614,26 @@ elif page == "Churn Analysis":
         customer_data["Inactive Days"].apply(assign_risk)
     )
 
-    total_customers = customer_data["Customer ID"].nunique()
+    
+total_customers = customer_data["Customer ID"].nunique()
 
-    high_risk = (
-        customer_data["Risk Level"] == "High Risk"
-    ).sum()
+high_risk = (
+    customer_data["Risk Level"] == "High Risk"
+).sum()
 
-    medium_risk = (
-        customer_data["Risk Level"] == "Medium Risk"
-    ).sum()
+medium_risk = (
+    customer_data["Risk Level"] == "Medium Risk"
+).sum()
+
+low_risk = (
+    customer_data["Risk Level"] == "Low Risk"
+).sum()
+
+high_risk_percentage = (
+    (high_risk / total_customers * 100)
+    if total_customers > 0 else 0
+)
+
 
     high_risk_revenue = customer_data.loc[
         customer_data["Risk Level"] == "High Risk",
