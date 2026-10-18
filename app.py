@@ -704,10 +704,12 @@ elif page == "Demand & Inventory":
     show_no_data(df)
     show_kpis(df)
 
+    # Product demand analysis
     product_demand = (
         df.groupby(
             ["StockCode", "Description"],
-            as_index=False
+            as_index=False,
+            dropna=False
         )
         .agg(
             Units_Sold=("Quantity", "sum"),
@@ -717,8 +719,14 @@ elif page == "Demand & Inventory":
         .sort_values("Units_Sold", ascending=False)
     )
 
+    # Fix mixed StockCode types for Streamlit tables
+    product_demand["StockCode"] = (
+        product_demand["StockCode"].astype(str)
+    )
+
     left, right = st.columns(2)
 
+    # Chart 1: Top 10 products by units sold
     with left:
         st.subheader("Top 10 Products by Units Sold")
 
@@ -735,8 +743,9 @@ elif page == "Demand & Inventory":
             horizontal=True
         )
 
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
+    # Chart 2: Monthly demand trend
     with right:
         st.subheader("Monthly Units Sold")
 
@@ -759,8 +768,9 @@ elif page == "Demand & Inventory":
             paper_bgcolor="white"
         )
 
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
+    # Chart 3: Demand by country
     st.subheader("Top Countries by Units Sold")
 
     country_demand = (
@@ -778,14 +788,17 @@ elif page == "Demand & Inventory":
         horizontal=True
     )
 
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
+    # Product demand table
     st.subheader("Product Demand Table")
 
     st.dataframe(
         product_demand.head(50),
-        use_container_width=True
+        width="stretch"
     )
+
+
 
 
 # =====================================================
