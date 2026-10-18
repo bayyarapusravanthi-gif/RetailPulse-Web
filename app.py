@@ -203,10 +203,10 @@ def show_kpis(data):
 
     col1, col2, col3, col4 = st.columns(4)
 
-    col1.metric("Total Revenue", f"{revenue:,.2f}")
+    col1.metric("Total Revenue", f"{revenue / 1000000:.2f}M")
     col2.metric("Total Orders", f"{orders:,.0f}")
     col3.metric("Total Customers", f"{customers:,.0f}")
-    col4.metric("Units Sold", f"{units:,.0f}")
+    col4.metric("Units Sold", f"{units / 1000000:.2f}M")
 
 
 def show_no_data(data):
