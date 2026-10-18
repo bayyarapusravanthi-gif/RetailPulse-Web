@@ -569,19 +569,15 @@ elif page == "Customer Analytics":
 
     st.plotly_chart(fig, use_container_width=True)
 
-
 # =====================================================
 # DASHBOARD 4: CHURN ANALYSIS
 # =====================================================
 elif page == "Churn Analysis":
 
     st.title("RetailPulse – Churn Analysis")
-
     st.caption(
-        "Inactivity-based risk estimates, not predictions "
-        "from a trained ML model."
+        "Inactivity-based risk estimates, not predictions from a trained ML model."
     )
-
     show_no_data(df)
 
     customer_data = (
@@ -594,9 +590,7 @@ elif page == "Churn Analysis":
         .reset_index()
     )
 
-    reference_date = (
-        df["InvoiceDate"].max() + pd.Timedelta(days=1)
-    )
+    reference_date = df["InvoiceDate"].max() + pd.Timedelta(days=1)
 
     customer_data["Inactive Days"] = (
         reference_date - customer_data["LastPurchase"]
@@ -614,26 +608,9 @@ elif page == "Churn Analysis":
         customer_data["Inactive Days"].apply(assign_risk)
     )
 
-    
-total_customers = customer_data["Customer ID"].nunique()
-
-high_risk = (
-    customer_data["Risk Level"] == "High Risk"
-).sum()
-
-medium_risk = (
-    customer_data["Risk Level"] == "Medium Risk"
-).sum()
-
-low_risk = (
-    customer_data["Risk Level"] == "Low Risk"
-).sum()
-
-high_risk_percentage = (
-    (high_risk / total_customers * 100)
-    if total_customers > 0 else 0
-)
-
+    total_customers = customer_data["Customer ID"].nunique()
+    high_risk = (customer_data["Risk Level"] == "High Risk").sum()
+    medium_risk = (customer_data["Risk Level"] == "Medium Risk").sum()
 
     high_risk_revenue = customer_data.loc[
         customer_data["Risk Level"] == "High Risk",
@@ -647,9 +624,8 @@ high_risk_percentage = (
     c.metric("Medium Risk Customers", f"{medium_risk:,}")
     d.metric(
         "High Risk Customer Revenue",
-        f"{high_risk_revenue:,.2f}"
+        f"{high_risk_revenue / 1_000_000:.2f}M"
     )
-
     left, right = st.columns(2)
 
     with left:
@@ -669,7 +645,6 @@ high_risk_percentage = (
             hole=0.4,
             title="Inactivity Risk Distribution"
         )
-
         st.plotly_chart(fig, use_container_width=True)
 
     with right:
@@ -683,7 +658,6 @@ high_risk_percentage = (
             hover_data=["Customer ID", "Orders"],
             title="Customer Inactivity and Revenue"
         )
-
         st.plotly_chart(fig, use_container_width=True)
 
     st.subheader("Customers to Review")
@@ -694,10 +668,9 @@ high_risk_percentage = (
         )
     ].sort_values("Inactive Days", ascending=False)
 
-    st.dataframe(
-        at_risk,
-        use_container_width=True
-    )
+    st.dataframe(at_risk, use_container_width=True)
+
+
 
 
 # =====================================================
