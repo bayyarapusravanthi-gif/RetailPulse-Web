@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -40,38 +39,22 @@ st.markdown("""
 
 
 # =====================================================
-# 3. LOAD EXCEL DATA
+# 3. LOAD GOOGLE SHEETS DATA
 # =====================================================
-
 @st.cache_data
 def load_data():
     sheet_id = "1Q2Zp5OBla3qRJ31gkSPqMUyog4DMBgto"
 
-    url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=xlsx"
-
-    sheet_1 = pd.read_excel(
-        url,
-        sheet_name="2009-10"
+    url = (
+        f"https://docs.google.com/spreadsheets/d/"
+        f"{sheet_id}/export?format=xlsx"
     )
 
-    sheet_2 = pd.read_excel(
-        url,
-        sheet_name="2010-11"
-    )
+    # Read both worksheets
+    sheet_1 = pd.read_excel(url, sheet_name="2009-10")
+    sheet_2 = pd.read_excel(url, sheet_name="2010-11")
 
-    return sheet_1, sheet_2
-
-    
-df1, df2 = load_data()
-
-df1["Revenue"] = df1["Quantity"] * df1["Price"]
-df2["Revenue"] = df2["Quantity"] * df2["Price"]
-
-sales = pd.concat([df1, df2], ignore_index=True)
-
-
-
-    # Combine both sheets
+    # Combine both worksheets
     data = pd.concat(
         [sheet_1, sheet_2],
         ignore_index=True
@@ -79,6 +62,7 @@ sales = pd.concat([df1, df2], ignore_index=True)
 
     data.columns = data.columns.astype(str).str.strip()
 
+    # Check required columns
     required_columns = [
         "Invoice",
         "StockCode",
@@ -87,8 +71,7 @@ sales = pd.concat([df1, df2], ignore_index=True)
         "InvoiceDate",
         "Price",
         "Customer ID",
-        "Country",
-        "Total Price"
+        "Country"
     ]
 
     missing_columns = [
@@ -98,43 +81,46 @@ sales = pd.concat([df1, df2], ignore_index=True)
 
     if missing_columns:
         raise ValueError(
-            f"Missing columns in Excel file: {missing_columns}"
+            f"Missing columns in Google Sheets: {missing_columns}"
         )
 
-    # Convert columns to correct data types
+    # Convert data types
     data["InvoiceDate"] = pd.to_datetime(
         data["InvoiceDate"],
         errors="coerce"
     )
 
-    for column in ["Quantity", "Price", "Total Price", "Customer ID"]:
+    for column in ["Quantity", "Price", "Customer ID"]:
         data[column] = pd.to_numeric(
             data[column],
             errors="coerce"
         )
 
-    # Remove exact duplicate rows after combining sheets
+    # Remove duplicate rows
     data = data.drop_duplicates().copy()
 
-    # Remove rows missing essential reporting information
+    # Remove rows with missing essential information
     data = data.dropna(
         subset=[
             "Invoice",
             "InvoiceDate",
             "Quantity",
             "Price",
-            "Total Price",
             "Customer ID",
             "Country"
         ]
     ).copy()
 
-    # Use the dataset's existing revenue column
-    data["Revenue"] = data["Total Price"]
+    # Calculate revenue
+    data["Revenue"] = data["Quantity"] * data["Price"]
 
-    # Date features
-    data["Month"] = data["InvoiceDate"].dt.to_period("M").astype(str)
+    # Create date features
+    data["Month"] = (
+        data["InvoiceDate"].dt.to_period("M").astype(str)
+    )
+
     data["Day of Week"] = data["InvoiceDate"].dt.day_name()
+
     data["Weekday Number"] = data["InvoiceDate"].dt.dayofweek
 
     return data
@@ -142,11 +128,12 @@ sales = pd.concat([df1, df2], ignore_index=True)
 
 try:
     sales = load_data()
+
 except Exception as error:
-    st.error("Unable to load your Excel dataset.")
+    st.error("Unable to load your Google Sheets dataset.")
     st.write(
-        "Check that cleaned_online_retail.xlsx is in the same "
-        "folder as app.py and that the sheet names are correct."
+        "Please check that your Google Sheets file is shared "
+        "for access and that the worksheet names are correct."
     )
     st.code(str(error))
     st.stop()
@@ -169,7 +156,7 @@ page = st.sidebar.radio(
     ]
 )
 
-# Slicers only on dashboards 3, 4 and 5
+# Date slicer only on dashboards 3, 4 and 5
 if page in [
     "Customer Analytics",
     "Churn Analysis",
@@ -187,15 +174,20 @@ if page in [
         max_value=max_date
     )
 
-    if isinstance(date_range, (tuple, list)) and len(date_range) == 2:
+    if (
+        isinstance(date_range, (tuple, list))
+        and len(date_range) == 2
+    ):
         start_date, end_date = date_range
 
         df = sales[
             (sales["InvoiceDate"].dt.date >= start_date)
             & (sales["InvoiceDate"].dt.date <= end_date)
         ].copy()
+
     else:
         df = sales.copy()
+
 else:
     df = sales.copy()
 
@@ -219,7 +211,9 @@ def show_kpis(data):
 
 def show_no_data(data):
     if data.empty:
-        st.warning("No records found for the selected filters.")
+        st.warning(
+            "No records found for the selected filters."
+        )
         st.stop()
 
 
@@ -245,6 +239,7 @@ def make_bar(data, x, y, title, horizontal=False):
         paper_bgcolor="white",
         margin=dict(l=20, r=20, t=60, b=20)
     )
+
     return fig
 
 
@@ -273,10 +268,12 @@ if page == "Executive Overview":
         markers=True,
         title="Revenue by Month"
     )
+
     fig.update_layout(
         plot_bgcolor="white",
         paper_bgcolor="white"
     )
+
     st.plotly_chart(fig, use_container_width=True)
 
     left, right = st.columns(2)
@@ -298,6 +295,7 @@ if page == "Executive Overview":
             "Revenue by Country",
             horizontal=True
         )
+
         st.plotly_chart(fig, use_container_width=True)
 
     with right:
@@ -315,6 +313,7 @@ if page == "Executive Overview":
             "Orders",
             "Number of Orders by Month"
         )
+
         st.plotly_chart(fig, use_container_width=True)
 
 
@@ -348,6 +347,7 @@ elif page == "Sales Analysis":
             "Revenue",
             "Revenue by Weekday"
         )
+
         st.plotly_chart(fig, use_container_width=True)
 
     with right:
@@ -368,6 +368,7 @@ elif page == "Sales Analysis":
             "Orders",
             "Orders by Weekday"
         )
+
         st.plotly_chart(fig, use_container_width=True)
 
     left, right = st.columns(2)
@@ -389,6 +390,7 @@ elif page == "Sales Analysis":
             "Top Products",
             horizontal=True
         )
+
         st.plotly_chart(fig, use_container_width=True)
 
     with right:
@@ -407,10 +409,12 @@ elif page == "Sales Analysis":
             markers=True,
             title="Monthly Revenue"
         )
+
         fig.update_layout(
             plot_bgcolor="white",
             paper_bgcolor="white"
         )
+
         st.plotly_chart(fig, use_container_width=True)
 
     st.subheader("Top 10 Customers by Revenue")
@@ -433,6 +437,7 @@ elif page == "Sales Analysis":
         "Top Customers",
         horizontal=True
     )
+
     st.plotly_chart(fig, use_container_width=True)
 
 
@@ -442,6 +447,7 @@ elif page == "Sales Analysis":
 elif page == "Customer Analytics":
 
     st.title("RetailPulse – Customer Analytics")
+
     show_no_data(df)
     show_kpis(df)
 
@@ -455,7 +461,9 @@ elif page == "Customer Analytics":
         .reset_index()
     )
 
-    reference_date = df["InvoiceDate"].max() + pd.Timedelta(days=1)
+    reference_date = (
+        df["InvoiceDate"].max() + pd.Timedelta(days=1)
+    )
 
     customer_data["Recency Days"] = (
         reference_date - customer_data["LastPurchase"]
@@ -465,7 +473,8 @@ elif page == "Customer Analytics":
     customer_data["Segment"] = "Regular"
 
     customer_data.loc[
-        customer_data["Revenue"] >= customer_data["Revenue"].quantile(0.75),
+        customer_data["Revenue"]
+        >= customer_data["Revenue"].quantile(0.75),
         "Segment"
     ] = "High Value"
 
@@ -493,6 +502,7 @@ elif page == "Customer Analytics":
             hole=0.4,
             title="Customers by Segment"
         )
+
         st.plotly_chart(fig, use_container_width=True)
 
     with right:
@@ -509,6 +519,7 @@ elif page == "Customer Analytics":
             "Revenue",
             "Revenue by Customer Segment"
         )
+
         st.plotly_chart(fig, use_container_width=True)
 
     left, right = st.columns(2)
@@ -522,6 +533,7 @@ elif page == "Customer Analytics":
             nbins=30,
             title="Days Since Last Purchase"
         )
+
         st.plotly_chart(fig, use_container_width=True)
 
     with right:
@@ -535,11 +547,15 @@ elif page == "Customer Analytics":
             hover_data=["Customer ID"],
             title="Orders vs Customer Revenue"
         )
+
         st.plotly_chart(fig, use_container_width=True)
 
     st.subheader("Top 10 Customers")
 
-    top_customers = customer_data.nlargest(10, "Revenue").copy()
+    top_customers = (
+        customer_data.nlargest(10, "Revenue").copy()
+    )
+
     top_customers["Customer ID"] = (
         top_customers["Customer ID"].astype(int).astype(str)
     )
@@ -551,6 +567,7 @@ elif page == "Customer Analytics":
         "Top Customers by Revenue",
         horizontal=True
     )
+
     st.plotly_chart(fig, use_container_width=True)
 
 
@@ -560,9 +577,12 @@ elif page == "Customer Analytics":
 elif page == "Churn Analysis":
 
     st.title("RetailPulse – Churn Analysis")
+
     st.caption(
-        "Inactivity-based risk estimates, not predictions from a trained ML model."
+        "Inactivity-based risk estimates, not predictions "
+        "from a trained ML model."
     )
+
     show_no_data(df)
 
     customer_data = (
@@ -575,7 +595,9 @@ elif page == "Churn Analysis":
         .reset_index()
     )
 
-    reference_date = df["InvoiceDate"].max() + pd.Timedelta(days=1)
+    reference_date = (
+        df["InvoiceDate"].max() + pd.Timedelta(days=1)
+    )
 
     customer_data["Inactive Days"] = (
         reference_date - customer_data["LastPurchase"]
@@ -594,8 +616,14 @@ elif page == "Churn Analysis":
     )
 
     total_customers = customer_data["Customer ID"].nunique()
-    high_risk = (customer_data["Risk Level"] == "High Risk").sum()
-    medium_risk = (customer_data["Risk Level"] == "Medium Risk").sum()
+
+    high_risk = (
+        customer_data["Risk Level"] == "High Risk"
+    ).sum()
+
+    medium_risk = (
+        customer_data["Risk Level"] == "Medium Risk"
+    ).sum()
 
     high_risk_revenue = customer_data.loc[
         customer_data["Risk Level"] == "High Risk",
@@ -607,7 +635,10 @@ elif page == "Churn Analysis":
     a.metric("Customers", f"{total_customers:,}")
     b.metric("High Risk Customers", f"{high_risk:,}")
     c.metric("Medium Risk Customers", f"{medium_risk:,}")
-    d.metric("High Risk Customer Revenue", f"{high_risk_revenue:,.2f}")
+    d.metric(
+        "High Risk Customer Revenue",
+        f"{high_risk_revenue:,.2f}"
+    )
 
     left, right = st.columns(2)
 
@@ -628,6 +659,7 @@ elif page == "Churn Analysis":
             hole=0.4,
             title="Inactivity Risk Distribution"
         )
+
         st.plotly_chart(fig, use_container_width=True)
 
     with right:
@@ -641,6 +673,7 @@ elif page == "Churn Analysis":
             hover_data=["Customer ID", "Orders"],
             title="Customer Inactivity and Revenue"
         )
+
         st.plotly_chart(fig, use_container_width=True)
 
     st.subheader("Customers to Review")
@@ -651,7 +684,10 @@ elif page == "Churn Analysis":
         )
     ].sort_values("Inactive Days", ascending=False)
 
-    st.dataframe(at_risk, use_container_width=True)
+    st.dataframe(
+        at_risk,
+        use_container_width=True
+    )
 
 
 # =====================================================
@@ -660,6 +696,7 @@ elif page == "Churn Analysis":
 elif page == "Demand & Inventory":
 
     st.title("RetailPulse – Demand & Inventory")
+
     st.caption(
         "Sales quantities are used as a demand indicator. "
         "Actual stock levels and supplier lead times are not available."
@@ -669,7 +706,10 @@ elif page == "Demand & Inventory":
     show_kpis(df)
 
     product_demand = (
-        df.groupby(["StockCode", "Description"], as_index=False)
+        df.groupby(
+            ["StockCode", "Description"],
+            as_index=False
+        )
         .agg(
             Units_Sold=("Quantity", "sum"),
             Revenue=("Revenue", "sum"),
@@ -695,6 +735,7 @@ elif page == "Demand & Inventory":
             "Product Demand",
             horizontal=True
         )
+
         st.plotly_chart(fig, use_container_width=True)
 
     with right:
@@ -713,10 +754,12 @@ elif page == "Demand & Inventory":
             markers=True,
             title="Monthly Demand Trend"
         )
+
         fig.update_layout(
             plot_bgcolor="white",
             paper_bgcolor="white"
         )
+
         st.plotly_chart(fig, use_container_width=True)
 
     st.subheader("Top Countries by Units Sold")
@@ -735,6 +778,7 @@ elif page == "Demand & Inventory":
         "Demand by Country",
         horizontal=True
     )
+
     st.plotly_chart(fig, use_container_width=True)
 
     st.subheader("Product Demand Table")
@@ -751,3 +795,9 @@ elif page == "Demand & Inventory":
 st.sidebar.divider()
 st.sidebar.caption("RetailPulse | Online Retail II")
 st.sidebar.caption(f"Rows loaded: {len(sales):,}")
+
+
+
+
+   
+            
