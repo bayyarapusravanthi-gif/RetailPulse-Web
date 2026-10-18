@@ -1,9 +1,9 @@
 
 ## Dataset
 
-The dataset used for the RetailPulse project is available here:
 
-[Open RetailPulse Dataset](PASTE_YOUR_GOOGLE_SHEETS_LINK_HERE)
+
+https://docs.google.com/spreadsheets/d/1Q2Zp5OBla3qRJ31gkSPqMUyog4DMBgto/edit?usp=sharing&ouid=114474504443187595993&rtpof=true&sd=true
 
 ## Live Dashboard
 
