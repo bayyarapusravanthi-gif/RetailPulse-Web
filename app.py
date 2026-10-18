@@ -208,7 +208,6 @@ def show_kpis(data):
     col3.metric("Total Customers", f"{customers:,.0f}")
     col4.metric("Units Sold", f"{units / 1000000:.2f}M")
 
-
 def show_no_data(data):
     if data.empty:
         st.warning(
